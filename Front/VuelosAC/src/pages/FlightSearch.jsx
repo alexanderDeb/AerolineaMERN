@@ -7,9 +7,14 @@ export default function FlightSearch() {
   const [flights, setFlights] = useState([]);
   const [selectedOrigin, setSelectedOrigin] = useState("");
   const [selectedDestination, setSelectedDestination] = useState("");
+  const [handlerOrigin, setHandlerOrigin] = useState(1);
+  const [handlerDestination, setHandlerDestination] = useState(1);
   const [result, setResult] = useState([]);
+  const [resultDestination, setResultDestination] = useState([]);
   const [searchOrigin, setSearchOrigin] = useState("");
   const [searchDestination, setSearchDestination] = useState("");
+  const [aviableFlights, setAviableFligts] = useState([]);
+  const [hasFlights, setHasFlights] = useState(0);
 
   //creamos una constante llamada URI para almacenar la ruta del API
   const URI = "http://localhost:8000/api/";
@@ -24,7 +29,7 @@ export default function FlightSearch() {
         },
       });
       const data = await response.json();
-      if (countries != []) {
+      if (countries) {
         data.map((x) => {
           countries.push(x.name);
         });
@@ -60,8 +65,9 @@ export default function FlightSearch() {
     };
     if (valor != "") {
       setResult(Filtrado(countries, valor));
-    } else if (searchOrigin == "") {
-      setResult([]);
+      setHandlerOrigin(0);
+    } else {
+      setHandlerOrigin(1);
     }
     console.log(valor);
     console.log(result);
@@ -70,6 +76,34 @@ export default function FlightSearch() {
   //Creamos la funcion que escucha los cambios en el input de destino
   const SearcherDestination = (e) => {
     setSearchDestination(e.target.value);
+
+    const valor = e.target.value;
+    const Filtrado = (arr, query) => {
+      return arr.filter((el) => el.toLowerCase().includes(query.toLowerCase()));
+    };
+    if (valor != "") {
+      setResultDestination(Filtrado(countries, valor));
+      setHandlerDestination(0);
+    } else {
+      setHandlerDestination(1);
+    }
+    console.log(valor);
+    console.log(resultDestination);
+  };
+
+  const HandlerButton = () => {
+    const Filtrado = (arr, query) => {
+      return arr.filter((el) =>
+        el.origin.toLowerCase().includes(query.toLowerCase())
+      );
+    };
+    if (aviableFlights.length != 0) {
+      console.log(Filtrado(flights, selectedOrigin));
+      setAviableFligts(Filtrado(flights, selectedOrigin));
+    }else{
+        console.log("No hay datos") 
+        console.log(aviableFlights)
+    }
   };
 
   //Se va a utilizar un hook llamado useEffect para ejecutar automaticamente la funcion
@@ -89,7 +123,7 @@ export default function FlightSearch() {
             placeholder="Origen"
             className="input input-bordered w-80"
           />
-          {result.length == 166 ? (
+          {handlerOrigin == 1 ? (
             <div className="hidden"></div>
           ) : (
             <ul className="absolute z-30 menu menu-sm bg-base-200 w-80 h-auto max-h-max rounded-box overflow-y-auto">
@@ -100,6 +134,8 @@ export default function FlightSearch() {
                       <button
                         onClick={(e) => {
                           setSelectedOrigin(e.target.value);
+                          setSearchOrigin(e.target.value);
+                          setHandlerOrigin(1);
                         }}
                         value={x}
                         id={x}
@@ -124,39 +160,67 @@ export default function FlightSearch() {
             placeholder="Destino"
             className="input input-bordered"
           />
+          {handlerDestination == 1 ? (
+            <div className="hidden"></div>
+          ) : (
+            <ul className="absolute z-30 menu menu-sm bg-base-200 w-80 h-auto max-h-max rounded-box overflow-y-auto">
+              {resultDestination ? (
+                <li className="text-black">
+                  {resultDestination.map((x) => {
+                    return (
+                      <button
+                        onClick={(e) => {
+                          setSelectedDestination(e.target.value);
+                          setSearchDestination(e.target.value);
+                          setHandlerDestination(1);
+                        }}
+                        value={x}
+                        id={x}
+                      >
+                        {x}
+                      </button>
+                    );
+                  })}
+                </li>
+              ) : (
+                <li></li>
+              )}
+            </ul>
+          )}
         </div>
         <div>
-          <button className="btn btn-primary">Hola</button>
+          <button className="btn btn-primary" onClick={HandlerButton()}>
+            Buscar
+          </button>
         </div>
       </div>
       <div>
-        <div className="overflow-x-auto">
-          <table className="table table-zebra">
-            <tbody>
-              {/* row 1 */}
-              <tr>
-                <th>1</th>
-                <td>Cy Ganderton</td>
-                <td>Quality Control Specialist</td>
-                <td>Blue</td>
-              </tr>
-              {/* row 2 */}
-              <tr>
-                <th>2</th>
-                <td>Hart Hagerty</td>
-                <td>Desktop Support Technician</td>
-                <td>Purple</td>
-              </tr>
-              {/* row 3 */}
-              <tr>
-                <th>3</th>
-                <td>Brice Swyre</td>
-                <td>Tax Accountant</td>
-                <td>Red</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {hasFlights == 1 ? (
+          <div className="overflow-x-auto">
+            <table className="table table-zebra text-center">
+              <thead>
+                <tr>
+                  <th>Origen</th>
+                  <th>Destino</th>
+                  <th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {aviableFlights.map((x) => {
+                  return (
+                    <tr>
+                      <th>{x.origin}</th>
+                      <td>{x.destination}</td>
+                      <td>{x.date}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div></div>
+        )}
       </div>
     </div>
   );
